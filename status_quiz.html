@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Квиз по статусам</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --surface: #ffffff;
+    --surface2: #f7f8fa;
+    --border: #dde1ea;
+    --border-strong: #c4cad8;
+    --accent: #1a3a6b;
+    --accent2: #2756a8;
+    --accent-light: #e8eef8;
+    --green: #1a7a4a;
+    --green-bg: #eaf6f0;
+    --yellow: #8a6800;
+    --yellow-bg: #fdf6dc;
+    --red: #b52a2a;
+    --red-bg: #fdeaea;
+    --text: #1c2236;
+    --muted: #6b7593;
+    --card-shadow: 0 2px 16px rgba(26,58,107,0.07), 0 1px 4px rgba(0,0,0,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 10% 10%, rgba(26,58,107,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 70% at 90% 90%, rgba(39,86,168,0.03) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .screen {
+    display: none;
+    width: 100%;
+    max-width: 620px;
+    padding: 24px;
+    animation: fadeIn 0.3s ease;
+  }
+  .screen.active { display: flex; flex-direction: column; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px 44px;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+  .welcome-logo {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0.75;
+  }
+  .welcome-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .welcome-text {
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .welcome-text strong { color: var(--text); font-weight: 600; }
+  .form-group { margin-bottom: 20px; }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(39,86,168,0.1);
+  }
+  .checkboxes { display: flex; flex-direction: column; gap: 8px; }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+  .checkbox-item:hover { border-color: var(--accent2); background: var(--accent-light); }
+  .checkbox-item.checked { border-color: var(--accent2); background: var(--accent-light); }
+  .checkbox-item input[type="checkbox"] { display: none; }
+  .check-box {
+    width: 17px; height: 17px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    background: white;
+  }
+  .checkbox-item.checked .check-box { background: var(--accent); border-color: var(--accent); }
+  .checkbox-item.checked .check-box::after { content: '✓'; color: white; font-size: 11px; font-weight: 700; }
+  .check-label { font-size: 14px; color: var(--text); font-weight: 400; }
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:active { transform: scale(0.99); }
+  .quiz-progress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .progress-bar-wrap {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-right: 16px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+  }
+  .quiz-card { min-height: 220px; display: flex; flex-direction: column; justify-content: center; }
+  .status-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .status-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text);
+    animation: statusIn 0.25s ease;
+  }
+  @keyframes statusIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .answer-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 28px;
+  }
+  .answer-btn {
+    padding: 13px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .answer-btn .hotkey {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    opacity: 0.4;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .answer-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .answer-btn.btn-no:hover   { border-color: var(--red);    background: var(--red-bg);    color: var(--red); }
+  .answer-btn.btn-know:hover { border-color: var(--yellow); background: var(--yellow-bg); color: var(--yellow); }
+  .answer-btn.btn-use:hover  { border-color: var(--green);  background: var(--green-bg);  color: var(--green); }
+  .answer-btn.flash-no    { border-color: var(--red);    background: var(--red-bg);    color: var(--red); }
+  .answer-btn.flash-know  { border-color: var(--yellow); background: var(--yellow-bg); color: var(--yellow); }
+  .answer-btn.flash-use   { border-color: var(--green);  background: var(--green-bg);  color: var(--green); }
+  .hint-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .hint-text { font-size: 11.5px; color: var(--muted); text-align: center; }
+  .hint-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--surface2);
+    letter-spacing: 0.05em;
+  }
+  .trap-emoji { font-size: 56px; margin-bottom: 20px; text-align: center; }
+  .trap-text {
+    font-size: 15px;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.8;
+    margin-bottom: 28px;
+  }
+  .done-emoji { font-size: 56px; margin-bottom: 20px; text-align: center; }
+  .done-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+  .done-text { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.75; }
+  .error-msg { font-size: 12px; color: var(--red); margin-top: 6px; display: none; }
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: WELCOME -->
+<div class="screen active" id="screen-welcome">
+  <div class="card">
+    <div class="welcome-logo">Опросник по статусам</div>
+    <div class="welcome-title">Знаете ли вы<br>статусы системы?</div>
+    <div class="welcome-text">
+      Этот опросник поможет разобраться, какие статусы внутри ПО знакомы сотрудникам — и какие активно используются в работе.<br><br>
+      <strong>Пожалуйста, отвечайте осознанно.</strong> Результаты помогут улучшить обучение и поддержку команды.
+    </div>
+    <div class="form-group">
+      <label>Фамилия и Имя</label>
+      <input type="text" id="input-name" placeholder="Например: Иванов Иван" />
+      <div class="error-msg" id="err-name">Пожалуйста, введите ваше имя</div>
+    </div>
+    <div class="form-group">
+      <label>Ваша функциональность</label>
+      <div class="checkboxes" id="checkboxes">
+        <label class="checkbox-item" data-value="досудебное урегулирование">
+          <input type="checkbox" value="досудебное урегулирование">
+          <span class="check-box"></span>
+          <span class="check-label">Досудебное урегулирование</span>
+        </label>
+        <label class="checkbox-item" data-value="судебно-приказное производство">
+          <input type="checkbox" value="судебно-приказное производство">
+          <span class="check-box"></span>
+          <span class="check-label">Судебно-приказное производство</span>
+        </label>
+        <label class="checkbox-item" data-value="исковое производство">
+          <input type="checkbox" value="исковое производство">
+          <span class="check-box"></span>
+          <span class="check-label">Исковое производство</span>
+        </label>
+        <label class="checkbox-item" data-value="исполнительное производство">
+          <input type="checkbox" value="исполнительное производство">
+          <span class="check-box"></span>
+          <span class="check-label">Исполнительное производство</span>
+        </label>
+      </div>
+      <div class="error-msg" id="err-func">Выберите хотя бы одну функциональность</div>
+    </div>
+    <button class="btn-primary" onclick="startQuiz()">Начать опрос →</button>
+  </div>
+</div>
+
+<!-- SCREEN 2: QUIZ -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-progress">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-text" id="progress-label">1 из 56</div>
+  </div>
+  <div class="card quiz-card">
+    <div class="status-label">Статус в системе</div>
+    <div class="status-text" id="status-text">Загрузка...</div>
+    <div class="answer-buttons">
+      <button class="answer-btn btn-no" id="btn-no" onclick="answer(0)">
+        <span class="hotkey">Q</span>
+        Не знаю
+      </button>
+      <button class="answer-btn btn-know" id="btn-know" onclick="answer(1)">
+        <span class="hotkey">W</span>
+        Знаю, но не пользуюсь
+      </button>
+      <button class="answer-btn btn-use" id="btn-use" onclick="answer(2)">
+        <span class="hotkey">E</span>
+        Использую в работе
+      </button>
+    </div>
+    <div class="hint-row">
+      <span class="hint-text">Горячие клавиши:</span>
+      <span class="hint-key">Q</span>
+      <span class="hint-text">·</span>
+      <span class="hint-key">W</span>
+      <span class="hint-text">·</span>
+      <span class="hint-key">E</span>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: TRAP -->
+<div class="screen" id="screen-trap">
+  <div class="card">
+    <div class="trap-emoji">😎</div>
+    <div class="trap-text">
+      Такого статуса не существует.<br>
+      Пожалуйста, не торопитесь!<br>
+      Мы пытаемся сделать удобнее для вас.
+    </div>
+    <button class="btn-primary" onclick="resumeAfterTrap()">Продолжить →</button>
+  </div>
+</div>
+
+<!-- SCREEN 4: DONE -->
+<div class="screen" id="screen-done">
+  <div class="card">
+    <div class="done-emoji">🌸</div>
+    <div class="done-title">Спасибо за участие!</div>
+    <div class="done-text">
+      Вы ответили на все вопросы.<br>
+      Ваши результаты сохранены — они помогут нам лучше понять,<br>какие статусы актуальны.
+    </div>
+  </div>
+</div>
+
+<script>
+// Карточка 14 = индекс 13, карточка 36 = индекс 35
+const STATUSES = [
+  "Новая",
+  "Без перс. данных",
+  "Категоризация объектов",
+  "Гос. орган",
+  "Формирование ДП",
+  "Отправка ДП",
+  "Установление контакта с должником",
+  "Истечение срока на урегулирование (после установления контакта с должником)",
+  "Заключение соглашения",
+  "Подписано соглашение",
+  "Отказ платить",
+  "Истечение срока на урегулирование (после отправки ДП)",
+  "Подготовка СП",
+  "Подготовка восстания",
+  "СП - в печать",
+  "СП - оплата пошлины",
+  "Отправка СП",
+  "Соглашение подписано после направления СП",
+  "СП удовлетворен",
+  "СП вступил в силу",
+  "СП - отмена",
+  "СП - возврат",
+  "СП - отказ",
+  "СП - обжалование",
+  "СП направлен в исп.произв.",
+  "Подготовка Иска",
+  "Иск - в печать",
+  "Иск - оплата пошлины",
+  "Отправка иска",
+  "Направлен мотивирующий иск",
+  "Заключено мировое соглашение",
+  "Иск удовлетворен",
+  "Иск вступил в силу",
+  "Иск - возврат",
+  "Иск - отказ",
+  "Отказ ППШ",
+  "Иск - апелляция",
+  "Иск - кассация (1 инстанция)",
+  "Иск - кассация (2 инстанция)",
+  "Иск - надзорная инстанция",
+  "Направлен в ФССП",
+  "Получен ФССП",
+  "Обжаловано невозбуждение",
+  "Возбуждено исп. произв.",
+  "Отказ в возбужд. исп. произв.",
+  "Отмена исп. документа",
+  "Исполнено",
+  "Окончено по п. 6, 7 ст. 47",
+  "Окончено по п. 3, 4 ст. 46",
+  "Окончено без исполн.",
+  "Отозвано.",
+  "Абонент",
+  "Не образует ТКО",
+  "Ликвидация",
+  "Банкротство",
+  "Долг менее 200 000"
+];
+
+const FAKE_INDEXES = new Set([13, 35]);
+
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbyIUctV6BxUUv8BbbKZO2mkXir5rNv9iATB-0XcE-0Gher0KuBvj7MPUyLgul61A2D1/exec";
+
+let userName = "";
+let userFunc = [];
+let answers = [];
+let current = 0;
+let answering = false;
+
+document.querySelectorAll('.checkbox-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const cb = item.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    item.classList.toggle('checked', cb.checked);
+  });
+});
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz() {
+  const nameVal = document.getElementById('input-name').value.trim();
+  const checked = [...document.querySelectorAll('.checkbox-item.checked')].map(i => i.dataset.value);
+  let valid = true;
+  if (!nameVal) {
+    document.getElementById('err-name').style.display = 'block';
+    valid = false;
+  } else {
+    document.getElementById('err-name').style.display = 'none';
+  }
+  if (checked.length === 0) {
+    document.getElementById('err-func').style.display = 'block';
+    valid = false;
+  } else {
+    document.getElementById('err-func').style.display = 'none';
+  }
+  if (!valid) return;
+  userName = nameVal;
+  userFunc = checked;
+  answers = [];
+  current = 0;
+  showCard();
+  showScreen('screen-quiz');
+}
+
+function showCard() {
+  document.getElementById('status-text').textContent = STATUSES[current];
+  const pct = (current / STATUSES.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = (current + 1) + ' из ' + STATUSES.length;
+}
+
+function flashBtn(val, callback) {
+  const flashClass = ['flash-no','flash-know','flash-use'][val];
+  const btnId = ['btn-no','btn-know','btn-use'][val];
+  const btn = document.getElementById(btnId);
+  btn.classList.add(flashClass);
+  setTimeout(() => { btn.classList.remove(flashClass); callback(); }, 200);
+}
+
+function nextCard() {
+  current++;
+  if (current >= STATUSES.length) {
+    submitResults();
+  } else {
+    const st = document.getElementById('status-text');
+    st.style.animation = 'none';
+    st.offsetHeight;
+    st.style.animation = '';
+    showCard();
+  }
+}
+
+function answer(val) {
+  if (answering) return;
+  answering = true;
+
+  const isFake = FAKE_INDEXES.has(current);
+
+  if (isFake && val !== 0) {
+    // Фейк + ответ не "Не знаю" → ловушка. Записываем 0, показываем предупреждение
+    answers.push({ status: STATUSES[current], answer: 0 });
+    flashBtn(val, () => {
+      current++;
+      answering = false;
+      showScreen('screen-trap');
+    });
+    return;
+  }
+
+  answers.push({ status: STATUSES[current], answer: val });
+  flashBtn(val, () => {
+    answering = false;
+    nextCard();
+  });
+}
+
+function resumeAfterTrap() {
+  showScreen('screen-quiz');
+  if (current >= STATUSES.length) {
+    submitResults();
+    return;
+  }
+  const st = document.getElementById('status-text');
+  st.style.animation = 'none';
+  st.offsetHeight;
+  st.style.animation = '';
+  showCard();
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('screen-quiz').classList.contains('active')) {
+    if (e.key.toLowerCase() === 'q') answer(0);
+    if (e.key.toLowerCase() === 'w') answer(1);
+    if (e.key.toLowerCase() === 'e') answer(2);
+  }
+});
+
+function submitResults() {
+  showScreen('screen-done');
+  const payload = {
+    name: userName,
+    functionality: userFunc.join(', '),
+    timestamp: new Date().toISOString(),
+    answers: answers
+  };
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(err => console.warn('Ошибка отправки:', err));
+}
+</script>
+</body>
+</html>
